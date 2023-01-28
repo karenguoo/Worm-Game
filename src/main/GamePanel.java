@@ -11,6 +11,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 
 public class GamePanel extends JPanel implements Runnable, MouseMotionListener, MouseListener {
+	//INSTANCE VARIABLES
 	static final int VIEW_WIDTH = 1400;
 	static final int VIEW_HEIGHT = 700;
 	static final int MAP_WIDTH = 7000;
@@ -20,15 +21,16 @@ public class GamePanel extends JPanel implements Runnable, MouseMotionListener, 
 	static final int BOARD_WIDTH = MAP_WIDTH - BORDER_WIDTH * 2;
 	static final int BOARD_HEIGHT = MAP_HEIGHT - BORDER_HEIGHT * 2;
 	static final Point topLeft = new Point((int) VIEW_WIDTH / 2, (int) VIEW_HEIGHT / 2);
-	static final Point bottomRight = new Point(BOARD_WIDTH + (int) VIEW_WIDTH / 2,
-			BOARD_HEIGHT + (int) VIEW_HEIGHT / 2);
+	static final Point bottomRight = new Point(BOARD_WIDTH + (int) VIEW_WIDTH / 2, BOARD_HEIGHT + (int) VIEW_HEIGHT / 2);
 	static final Point mapBottomRight = new Point(BOARD_WIDTH + VIEW_WIDTH, BOARD_HEIGHT + VIEW_HEIGHT);
+
 	static final int UNIT_SIZE = 10;
-	static final int SNAKE_COUNT = 30;
-	static final int FOOD_COUNT = 700;
+	static final int SNAKE_COUNT = 80;
+	static final int FOOD_COUNT = 3000;
+	static final int FPS = 100;
+
 	static Food boostFood;
 
-	static final int FPS = 60;
 	public int pB;
 	public int botCounter = 1;
 
@@ -51,17 +53,18 @@ public class GamePanel extends JPanel implements Runnable, MouseMotionListener, 
 	private boolean lose = false;
 	private boolean hacksOn = false;
 
-	// Constructor
+	//CONSTRUCTOR
 	public GamePanel(MainFrame mF) {
 		mainFrame = mF;
-		this.backBuffer = new BufferedImage(VIEW_WIDTH, VIEW_HEIGHT, BufferedImage.TYPE_INT_RGB); // gameboard
+		this.backBuffer = new BufferedImage(VIEW_WIDTH, VIEW_HEIGHT, BufferedImage.TYPE_INT_RGB); //gameboard
 
-		try { // load game over image
-			loseScreen = ImageIO.read(new File("screens/losescreen.png"));
+		try { //load game over image
+			loseScreen = ImageIO.read(new File("screens/losescreen.png"));		
 		} catch (IOException e) {
-			System.out.println("File cannot be found");
+			System.out.println("File cannot be found"); 
 		}
 
+		//Set up
 		setPreferredSize(new Dimension(VIEW_WIDTH, VIEW_HEIGHT));
 		this.setBackground(Color.black);
 		this.setFocusable(true);
@@ -71,8 +74,8 @@ public class GamePanel extends JPanel implements Runnable, MouseMotionListener, 
 		bindKeys();
 	}
 
-	// Description: The method starts game thread
-	// Parameters: n/a
+	//Description: The method starts game thread
+	//Parameters: n/a
 	public void startGame() {
 		init();
 		this.gameThread = new Thread(this);
@@ -80,68 +83,58 @@ public class GamePanel extends JPanel implements Runnable, MouseMotionListener, 
 		runGame = true;
 	}
 
-	// Description: The method contains gamethread
-	// Parameters: n/a
+	//Description: The method contains game thread
+	//Parameters: n/a
 	@Override
 	public void run() {
+		//game loop
 		double drawInterval = 1000000000 / FPS;
 		double nextDrawTime = System.nanoTime() + drawInterval;
-		while (runGame) {
+		while(runGame) {
 			update();
 			checkCollision();
 			draw();
-			if (!lose) {
-				try { // calculate time passed
+			if(!lose) {		
+				try { //calculate time passed 
 					double sleepTime = nextDrawTime - System.nanoTime();
 					if (sleepTime < 0)
 						sleepTime = 0;
-					Thread.sleep((long) sleepTime / 1000000); // sleep thread for time left
+					Thread.sleep((long) sleepTime / 1000000); //sleep thread for time left
 					nextDrawTime += drawInterval;
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-			} else
+			}
+			else
 				break;
 		}
 	}
 
-	@Override
-	public void mouseMoved(MouseEvent e) {
-		if (!lose)
-			player.setTarget((int) (e.getX() + cam.x), (int) (e.getY() + cam.y)); // move player to mouse
-	}
-
-	@Override
-	public void mouseDragged(MouseEvent e) {
-	}
-
-	// Description: The method stops game thread
-	// Parameters:
+	//Description: The method stops game thread
+	//Parameters:
 	private void stopGame() {
 		runGame = false;
-		hacksOn = false;
-		pB = playerInfo[0]; // set current length (personal best)
+		pB = playerInfo[0]; //set current length (personal best)
 		this.gameThread = null;
 	}
 
-	// Description: The method updates game status (player location, focus camera on
-	// player, generate food, leaderboard)
-	// Parameters: n/a
+	//Description: The method updates game status (player location, focus camera on player, generate food, leaderboard)
+	//Parameters: n/a
 	private void update() {
-		if (boostFood != null)
+		if (boostFood!=null)
 			foods.add(boostFood);
-		boostFood = null;
-		player.move();
-		cam.focus(player); // move view screen to centre on player
+		boostFood=null;
+		player.move(); 
+		cam.focus(player); //move view screen to centre on player
 
-		// generate snake bots
-		if (snakes.size() < SNAKE_COUNT) {
+		//generate snake bots
+		if(snakes.size() < SNAKE_COUNT) {
 			snakes.put(botCounter, new SnakeBot(randomPoint(), botCounter));
 			botCounter++;
 		}
-		// set food target for every bot
-		for (Entry<Integer, Snake> entry : snakes.entrySet()) {
-			if (entry.getKey() != 0) {
+		//set food target for every bot
+		for(Entry<Integer, Snake> entry: snakes.entrySet()) {
+			if(entry.getKey() != 0) {
 				SnakeBot sB = (SnakeBot) entry.getValue();
 				TargetPoint tP = sB.findNearestFood(foods);
 				sB.setTarget(tP.x, tP.y);
@@ -149,23 +142,23 @@ public class GamePanel extends JPanel implements Runnable, MouseMotionListener, 
 			}
 		}
 
-		if (foods.size() < FOOD_COUNT) {
+		if(foods.size() < FOOD_COUNT) {
 			Food newFood = new Food(randomPoint());
 			while (!foods.add(newFood))
 				;
 		}
 
-		// remove a food if too many
+		//remove a food if too many
 		int count = foods.size();
-		Iterator<Food> it = foods.iterator();
-		while (it.hasNext()) {
-			if (count <= FOOD_COUNT)
+		Iterator<Food> it = foods.iterator();			
+		while(it.hasNext()) {
+			if(count <= FOOD_COUNT)
 				break;
 			Food r = it.next();
 			long time = r.timestamp;
 			long diff = System.currentTimeMillis() - time;
-			// if food is not in view of player and older than 10 seconds, remove
-			if (!player.inView(r) && diff >= 10000) {
+			//if food is not in view of player and older than 20 seconds, remove
+			if(!player.inView(r) && diff >= 20000) { 
 				it.remove();
 				count--;
 			}
@@ -174,87 +167,82 @@ public class GamePanel extends JPanel implements Runnable, MouseMotionListener, 
 
 	}
 
-	// Description: The method calculate new position of mouse (when mouse is
-	// stationary and snake has achieved target)
-	// Parameters: n/a
-	// Return: new target point
+	//Description: The method calculate new position of mouse (when mouse is stationary and snake has achieved target)
+	//Parameters: n/a
+	//Return: new target point
 	public static Point getMousePoint() {
 		Point p = MouseInfo.getPointerInfo().getLocation();
 		Point m = mainFrame.getLocation();
-		Point target = new Point((int) (p.x - m.x + cam.x), (int) (p.y - m.y + cam.y)); // adjust from window desktop
-																						// coordinates to game window
+		Point target = new Point((int)(p.x-m.x+cam.x), (int)(p.y-m.y+cam.y)); //adjust from window desktop coordinates to game window
 		return target;
 	}
 
-	// Description: The method draws game components
-	// Parameters: n/a
+	//Description: The method draws game components
+	//Parameters: n/a
 	private void draw() {
-		Graphics g = this.getGraphics(); // panel graphics
-		Graphics2D gB = (Graphics2D) backBuffer.getGraphics(); // gameboard graphics
-		Graphics2D gV = (Graphics2D) backBuffer.getGraphics(); // view screen graphics
+		Graphics g = this.getGraphics(); //panel graphics
+		Graphics2D gB = (Graphics2D) backBuffer.getGraphics(); //gameboard graphics
+		Graphics2D gV = (Graphics2D) backBuffer.getGraphics(); //view screen graphics
 
 		gB.setColor(Color.BLACK);
-		gB.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+		gB.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);	
 
 		cam.turnOn(gB);
 		tiles.draw(gB);
-		for (Entry<Integer, Snake> entry : snakes.entrySet()) {
-			Snake s = entry.getValue();
-			s.draw(gB);
-			if (hacksOn)
-				s.drawHacks(gB);
-		}
+
 		Iterator<Food> it = foods.iterator();
 		while (it.hasNext()) {
 			Food f = it.next();
 			f.draw(gB);
 		}
+		for(Entry<Integer, Snake> entry: snakes.entrySet()) {
+			Snake s = entry.getValue();
+			s.draw(gB);
+			if(hacksOn)
+				s.drawHacks(gB);
+		}
 		cam.turnOff(gB);
 
-		if (lose) { // if player dies
+		if(lose) { //if player dies
 			drawLoseScreen(gV);
 			foods.clear();
-		} else {
+		}
+		else {
 			miniMap.drawMiniMap(gV);
 			lb.draw(gV);
 			playerInfo = lb.playerInfo(gV);
 		}
-
 		g.drawImage(backBuffer, 0, 0, this);
 
 	}
 
-	// Description: The method initialise game variables
-	// Parameters: n/a
+	//Description: The method initialize game variables
+	//Parameters: n/a
 	private void init() {
 		lose = false;
+		hacksOn = false;
 		botCounter = 1;
 		Iterator<Entry<Integer, Snake>> it = snakes.entrySet().iterator();
 		while (it.hasNext()) {
 			it.next();
 			it.remove();
 		}
-		foods.clear();
-
-		player = new Player(new Point(randomPoint()), mainFrame.getPlayerName()); // create player
-		snakes.put(0, player); // player always at map index 0
+		foods.removeAll(foods);
+		player = new Player(new Point(randomPoint()), mainFrame.getPlayerName()); //create player
+		snakes.put(0, player); //player always at map index 0
 		cam.focus(player);
 	}
 
-	// Description: The method checks collision of snake head
-	// Parameters: n/a
+	//Description: The method checks collision of snake head 
+	//Parameters: n/a
 	private void checkCollision() {
 		Point h = player.getHead();
-		if (h.x < topLeft.x || h.x + UNIT_SIZE > bottomRight.x || h.y < topLeft.y || h.y + UNIT_SIZE > bottomRight.y) { // snake
-																														// head
-																														// and
-																														// border
+		if (h.x < topLeft.x || h.x + UNIT_SIZE > bottomRight.x || h.y < topLeft.y || h.y + UNIT_SIZE > bottomRight.y) { //snake head and border
 			lose = true;
 			stopGame();
-
 		}
 
-		if (!lose) { // snake head with food
+		if(!lose) { //snake head with food
 			Iterator<Food> it = foods.iterator();
 			while (it.hasNext()) {
 				Food f = it.next();
@@ -264,11 +252,11 @@ public class GamePanel extends JPanel implements Runnable, MouseMotionListener, 
 				}
 			}
 		}
-		// check if bot collides with food
-		for (Entry<Integer, Snake> entry : snakes.entrySet()) {
-			if (entry.getKey() != 0) {
+		//check if bot collides with food
+		for(Entry<Integer, Snake> entry: snakes.entrySet()) {
+			if(entry.getKey() != 0) {
 				SnakeBot sB = (SnakeBot) entry.getValue();
-				Point botH = sB.getHead(); // bot head with food
+				Point botH = sB.getHead(); //bot head with food
 				Iterator<Food> it = foods.iterator();
 				while (it.hasNext()) {
 					Food f = it.next();
@@ -280,74 +268,68 @@ public class GamePanel extends JPanel implements Runnable, MouseMotionListener, 
 			}
 		}
 
-		// collision to snake body
+		//collision to snake body
 		Iterator<Entry<Integer, Snake>> it = snakes.entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry<Integer, Snake> pair = it.next();
 			Snake s = pair.getValue();
 			int key = pair.getKey();
-			if (s.checkBodyCollide(key, snakes)) {
-				ArrayList<Point> bones = s.findBones();
-				for (Point p : bones) {
+			if(s.checkBodyCollide(key, snakes)) {
+				for(Point p: s.bodyToFood()) {
 					foods.add(new Food(p));
 				}
-				// s is the player that dies!!!!
-				if (s.isPlayer) {
+				//s is the player that dies!!!!
+				if(s.isPlayer) {
 					lose = true;
 					stopGame();
-				} else
+				}
+				else 
 					it.remove();
 			}
-		}
+		}	
 	}
 
-	// Description: The method generate random point on board
-	// Parameters: n/a
-	// Return: Point
-	private Point randomPoint() {
+	//Description: The method generate random point on board
+	//Parameters: n/a
+	//Return: Point
+	private static Point randomPoint() {
 		Point p = new Point(0, 0);
 		p.x = (int) (Math.random() * (MAP_WIDTH - VIEW_WIDTH - UNIT_SIZE) + BORDER_WIDTH);
 		p.y = (int) (Math.random() * (MAP_HEIGHT - VIEW_HEIGHT - UNIT_SIZE) + BORDER_HEIGHT);
 		return p;
 	}
 
-	// Description: The method chooses random pastel colour
-	// Parameters: n/a
-	// Return: color
-	static Color randomColour() {
-		Random random = new Random();
-		return Color.getHSBColor(random.nextFloat(), 0.6f, 1.0f);
-	}
 
-	// Description: The method draws random point on board
-	// Parameters: n/a
-	// Return: Point
+	//Description: The method draws random point on board
+	//Parameters: n/a
+	//Return: Point
 	private void drawLoseScreen(Graphics g) {
 		g.setColor(new Color(50, 50, 50, 128));
-		g.drawRect(VIEW_WIDTH / 3, VIEW_HEIGHT / 4, VIEW_WIDTH / 3, VIEW_HEIGHT / 2);
-		g.fillRect(VIEW_WIDTH / 3, VIEW_HEIGHT / 4, VIEW_WIDTH / 3, VIEW_HEIGHT / 2);
+		g.drawRect(VIEW_WIDTH/3, VIEW_HEIGHT/4, VIEW_WIDTH/3, VIEW_HEIGHT/2);
+		g.fillRect(VIEW_WIDTH/3, VIEW_HEIGHT/4, VIEW_WIDTH/3, VIEW_HEIGHT/2);
 		g.setColor(Color.WHITE);
-		g.drawImage(loseScreen, VIEW_WIDTH / 3, VIEW_HEIGHT / 4, null);
+		g.drawImage(loseScreen, VIEW_WIDTH/3, VIEW_HEIGHT/4, null);
 		g.setFont(new Font("Helvetica", Font.PLAIN, 24));
-		g.drawString("Your length was " + playerInfo[0], VIEW_WIDTH / 3 + 130, VIEW_HEIGHT / 4 + 165);
-		g.drawString("Your rank was " + playerInfo[1], VIEW_WIDTH / 3 + 150, VIEW_HEIGHT / 4 + 200);
+		g.drawString("Your length was " + playerInfo[0], VIEW_WIDTH/3+130, VIEW_HEIGHT/4+165);
+		g.drawString("Your rank was " + playerInfo[1], VIEW_WIDTH/3+150, VIEW_HEIGHT/4+200);
+
 
 	}
 
-	// Description: The method binds escape key to panel
-	// Parameters: n/a
-	// Return: n/a
+	//Description: The method binds escape key to panel
+	//Parameters: n/a
+	//Return: n/a
 	private void bindKeys() {
 		InputMap inputMap = this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
 		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "escapeAction");
 		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "spaceAction");
 		Action escapeAction = new AbstractAction() {
-			private static final long serialVersionUID = 1L; // suppress a serializable warning
+			private static final long serialVersionUID = 1L; //suppress a serializable warning
 
 			public void actionPerformed(ActionEvent e) {
 				stopGame();
 				try {
-					Thread.sleep(200); // get main Thread to finish before exiting to menu
+					Thread.sleep(200); //get main Thread to finish before exiting to menu
 				} catch (InterruptedException e1) {
 					e1.printStackTrace();
 				}
@@ -355,18 +337,29 @@ public class GamePanel extends JPanel implements Runnable, MouseMotionListener, 
 			}
 		};
 		Action spaceAction = new AbstractAction() {
-			private static final long serialVersionUID = 1L; // suppress a serializable warning
+			private static final long serialVersionUID = 1L; //suppress a serializable warning
 
 			public void actionPerformed(ActionEvent e) {
-				if (hacksOn)
+				if(hacksOn)
 					hacksOn = false;
 				else
 					hacksOn = true;
 			}
 		};
 		ActionMap actionMap = this.getActionMap();
-		actionMap.put("escapeAction", escapeAction); // bind escape key
-		actionMap.put("spaceAction", spaceAction); // bind space key
+		actionMap.put("escapeAction", escapeAction); //bind escape key
+		actionMap.put("spaceAction", spaceAction); //bind space key
+	}
+
+	//ABSTRACT METHODS
+	@Override
+	public void mouseMoved(MouseEvent e) {
+		if(!lose)
+			player.setTarget((int) (e.getX() + cam.x), (int) (e.getY() + cam.y)); //move player to mouse
+	}
+
+	@Override
+	public void mouseDragged(MouseEvent e) {
 	}
 
 	@Override
@@ -377,14 +370,13 @@ public class GamePanel extends JPanel implements Runnable, MouseMotionListener, 
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		// System.out.print("drag");
 		player.boost();
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		// System.out.print("release");
 		player.reduce();
+
 	}
 
 	@Override

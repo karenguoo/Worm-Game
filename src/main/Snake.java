@@ -15,10 +15,8 @@ public abstract class Snake {
 	public String name;
 
 	public boolean isPlayer;
-	protected final int INIT_LENGTH = 20;
-	protected final int NORMAL_SPEED = 4;
-	public int length = INIT_LENGTH;
-	public int speed = NORMAL_SPEED;
+	public int length = 15;
+	public int speed = 4;
 	private Point lastTail;
 	private double degree = 0;
 	private int goalX;
@@ -70,16 +68,41 @@ public abstract class Snake {
 		setHead(newHead);
 	}
 
+	// Description: The method finds every body part one unit away to put as food
+	// Parameters: n/a
+	// Return: arraylist of points
+	public ArrayList<Point> bodyToFood() {
+		ArrayList<Point> bones = new ArrayList<>();
+		Point b1 = getHead();
+		bones.add(b1);
+		for (int i = 1; i < length; i++) {
+			Point b2 = body.get(i);
+			double distance = calcDistance(b1, b2);
+			if (distance > u) { // find the body part to draw that is 1 unit away
+				bones.add(b2);
+				b1 = b2;
+			}
+		}
+		return bones;
+	}
+
+	// Description: The method finds the distance between two points
+	// Parameters: 2 points
+	// Return: double of hypotenuse
+	private double calcDistance(Point p1, Point p2) {
+		double distance = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+		return distance;
+	}
+
 	// Description: The method draws snakes
 	// Parameters: Graphics
 	public void draw(Graphics g) {
 		g.setColor(color);
 		g.fillOval(headX, headY, u + 2, u + 2);
 
-		// draws circles as body
-		ArrayList<Point> bones = findBones();
-		for (Point b : bones) {
-			g.fillOval(b.x, b.y, u, u);
+		// draws circles
+		for (Point p : body) {
+			g.fillOval(p.x, p.y, u, u);
 		}
 		// draws spine
 		for (int i = 0; i < length - 1; i++) {
@@ -121,34 +144,6 @@ public abstract class Snake {
 
 	}
 
-	// Description: The method finds the back bones of the body (body overlaps right
-	// now)
-	// Parameters: n/a
-	// Return: array list of bones
-	public ArrayList<Point> findBones() {
-		ArrayList<Point> bones = new ArrayList<>();
-		Point b1 = getHead();
-		bones.add(b1);
-
-		for (int i = 1; i < length; i++) {
-			Point b2 = body.get(i);
-			double distance = calcDistance(b1, b2);
-			if (distance >= u - 2) { // find the body part to draw that is 1 unit away
-				bones.add(b2);
-				b1 = b2;
-			}
-		}
-		return bones;
-	}
-
-	// Description: The method finds the distance between two points
-	// Parameters: 2 points
-	// Return: double of hypotenuse
-	private double calcDistance(Point p1, Point p2) {
-		double distance = Math.hypot(p1.x - p2.x, p1.y - p2.y);
-		return distance;
-	}
-
 	// Description: The method draws snakes on map
 	// Parameters: Graphics
 	public void drawHead(Graphics g) { // for minimap
@@ -169,7 +164,8 @@ public abstract class Snake {
 
 				Snake s = entry.getValue();
 				for (Point point : s.body) {
-					distance = (int) calcDistance(point, head);
+					distance = (int) Math
+							.sqrt((point.x - head.x) * (point.x - head.x) + (point.y - head.y) * (point.y - head.y));
 					if (distance < u) {
 						// key is the snake that died
 						return true;
