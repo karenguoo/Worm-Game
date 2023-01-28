@@ -23,7 +23,7 @@ public class MenuPanel extends JPanel implements ActionListener, KeyListener, Fo
 	private static int height = 700;
 	private static BufferedImage mainMenu;
 
-	//CONSTRUCTOR
+	// CONSTRUCTOR
 	public MenuPanel(MainFrame frame) {
 		this.frame = frame;
 		cardLayout = new CardLayout();
@@ -37,7 +37,7 @@ public class MenuPanel extends JPanel implements ActionListener, KeyListener, Fo
 		}
 
 		pb = updatePB(pb);
-		if (pb==0)
+		if (pb == 0)
 			pbLabel = new JLabel("     No personal best!");
 		else
 			pbLabel = new JLabel("Your personal best is " + pb + "!");
@@ -52,7 +52,7 @@ public class MenuPanel extends JPanel implements ActionListener, KeyListener, Fo
 		nameTextArea.addFocusListener(this);
 		nameTextArea.addKeyListener(this);
 
-		//set up buttons
+		// set up buttons
 		playButton = new JButton(play);
 		playButton.setBounds((width - 200) / 2, 410, 200, 60);
 		playButton.setActionCommand("play");
@@ -102,7 +102,7 @@ public class MenuPanel extends JPanel implements ActionListener, KeyListener, Fo
 				PrintWriter outFile = new PrintWriter(new FileWriter("pb.txt"));
 				outFile.println(pb);
 				outFile.close();
-					pbLabel.setText("Your personal best is " + pb + "!");
+				pbLabel.setText("Your personal best is " + pb + "!");
 				return pb;
 			} catch (IOException e) {
 				System.out.println("File error");
@@ -139,8 +139,10 @@ public class MenuPanel extends JPanel implements ActionListener, KeyListener, Fo
 					"Use your mousepad/mouse to pilot your worm around the map to eat food and grow. \n"
 							+ "Kill other worms by making their head collide into worm body/game borders. \n"
 							+ "The objective is to be the largest worm in length. "
-							+ "\n\n\t- Turn hacks on/off by pressing the space bar." + "\n\t- Speed boost (with min length 8) by holding down mouse."+ "\n\t- Hit esc key to return to main menu.",
-							"How To Play", JOptionPane.QUESTION_MESSAGE);
+							+ "\n\n\t- Turn hacks on/off by pressing the space bar."
+							+ "\n\t- Speed boost (with min length 8) by holding down mouse."
+							+ "\n\t- Hit esc key to return to main menu.",
+					"How To Play", JOptionPane.QUESTION_MESSAGE);
 		} else if (event.equals("about")) {
 			JOptionPane.showMessageDialog(null, "Creators: Karen & Rhea \nIdea from: Slither.io\n\n Have fun!",
 					"About Worm.io", JOptionPane.QUESTION_MESSAGE);
@@ -152,7 +154,7 @@ public class MenuPanel extends JPanel implements ActionListener, KeyListener, Fo
 		return nameTextArea.getText();
 	}
 
-	//ABSTRACT METHODS
+	// ABSTRACT METHODS
 	@Override
 	public void focusGained(FocusEvent e) {
 		nameTextArea.setText("");
@@ -176,6 +178,7 @@ public class MenuPanel extends JPanel implements ActionListener, KeyListener, Fo
 		// TODO Auto-generated method stub
 
 	}
+
 	@Override
 	public void keyPressed(KeyEvent e) {
 		int key = e.getKeyCode();

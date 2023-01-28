@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 
 public abstract class Snake {
 
-	//INSTANCE VARIABLES
+	// INSTANCE VARIABLES
 	public static final int u = GamePanel.UNIT_SIZE;
 	protected final ArrayList<Point> body = new ArrayList<Point>();
 
@@ -15,15 +15,17 @@ public abstract class Snake {
 	public String name;
 
 	public boolean isPlayer;
-	public int length = 8;
-	public int speed = 10;
+	protected final int INIT_LENGTH = 20;
+	protected final int NORMAL_SPEED = 4;
+	public int length = INIT_LENGTH;
+	public int speed = NORMAL_SPEED;
 	private Point lastTail;
 	private double degree = 0;
 	private int goalX;
 	private int goalY;
 	protected Color color;
 
-	//CONSTUCTOR
+	// CONSTUCTOR
 	public Snake(Point head, String name, boolean isPlayer) {
 		for (int i = 0; i < length; i++) {
 			body.add(new Point(head.x, head.y));
@@ -35,23 +37,23 @@ public abstract class Snake {
 		color = randomColour();
 	}
 
-	//Description: Calculates if food is visible in cam
-	//Parameters: Location of food
-	//Return: boolean representing if food is visible
+	// Description: Calculates if food is visible in cam
+	// Parameters: Location of food
+	// Return: boolean representing if food is visible
 	public boolean inView(Point food) {
-		if(headX + GamePanel.BORDER_WIDTH < food.x || food.x + GamePanel.BORDER_WIDTH < headX
+		if (headX + GamePanel.BORDER_WIDTH < food.x || food.x + GamePanel.BORDER_WIDTH < headX
 				|| headY + GamePanel.BORDER_HEIGHT < food.y || food.y + GamePanel.BORDER_HEIGHT < headY)
 			return false;
 		return true;
 	}
 
-	//Description: Increases snake size
+	// Description: Increases snake size
 	public void grow() {
 		length++;
 		body.add(lastTail);
 	}
-	
-	//Description: Moves snake towards target (mouse for player vs food for bot)
+
+	// Description: Moves snake towards target (mouse for player vs food for bot)
 	public void move() {
 		double distance = Math.hypot(headX - goalX, headY - goalY);
 
@@ -68,17 +70,18 @@ public abstract class Snake {
 		setHead(newHead);
 	}
 
-	//Description: The method draws snakes
-	//Parameters: Graphics
+	// Description: The method draws snakes
+	// Parameters: Graphics
 	public void draw(Graphics g) {
 		g.setColor(color);
 		g.fillOval(headX, headY, u + 2, u + 2);
-		
-		//draws circles
-		for (Point p : body) {
-			g.fillOval(p.x, p.y, u, u);
+
+		// draws circles as body
+		ArrayList<Point> bones = findBones();
+		for (Point b : bones) {
+			g.fillOval(b.x, b.y, u, u);
 		}
-		//draws spine
+		// draws spine
 		for (int i = 0; i < length - 1; i++) {
 			Point p1 = body.get(i);
 			Point p2 = body.get(i + 1);
@@ -86,8 +89,9 @@ public abstract class Snake {
 		}
 		drawEyes(g);
 	}
-	//Description: The method draws snake eyes
-	//Parameters: Graphics
+
+	// Description: The method draws snake eyes
+	// Parameters: Graphics
 	private void drawEyes(Graphics g) {
 		double eyeRadius = u / 3;
 		double pupilRadius = u / 5.5;
@@ -109,24 +113,52 @@ public abstract class Snake {
 		g.fillOval((int) (eyeR.x - eyeRadius), (int) (eyeR.y - pupilRadius), (int) (pupilRadius * 2),
 				(int) (pupilRadius * 2));
 	}
-	
-	//Description: The method used to display hack mode
-	//Parameters: Graphics
+
+	// Description: The method used to display hack mode
+	// Parameters: Graphics
 	public void drawHacks(Graphics g) {
 		g.drawLine(headX, headY, goalX, goalY); // hacker mode
 
 	}
-	
-	//Description: The method draws snakes on map
-	//Parameters: Graphics
+
+	// Description: The method finds the back bones of the body (body overlaps right
+	// now)
+	// Parameters: n/a
+	// Return: array list of bones
+	public ArrayList<Point> findBones() {
+		ArrayList<Point> bones = new ArrayList<>();
+		Point b1 = getHead();
+		bones.add(b1);
+
+		for (int i = 1; i < length; i++) {
+			Point b2 = body.get(i);
+			double distance = calcDistance(b1, b2);
+			if (distance >= u - 2) { // find the body part to draw that is 1 unit away
+				bones.add(b2);
+				b1 = b2;
+			}
+		}
+		return bones;
+	}
+
+	// Description: The method finds the distance between two points
+	// Parameters: 2 points
+	// Return: double of hypotenuse
+	private double calcDistance(Point p1, Point p2) {
+		double distance = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+		return distance;
+	}
+
+	// Description: The method draws snakes on map
+	// Parameters: Graphics
 	public void drawHead(Graphics g) { // for minimap
 		g.setColor(Color.DARK_GRAY);
 		g.fillOval(headX - (u * 25), headY - (u * 25), u * 50, u * 50);
 
 	}
-	
-	//Description: The method checks collision of snakes with other snakes
-	//Parameters: key of snake and map of snakes
+
+	// Description: The method checks collision of snakes with other snakes
+	// Parameters: key of snake and map of snakes
 	public boolean checkBodyCollide(int key, Map<Integer, Snake> snakes) {
 		int distance = 0;
 		Snake currentS = snakes.get(key);
@@ -137,9 +169,7 @@ public abstract class Snake {
 
 				Snake s = entry.getValue();
 				for (Point point : s.body) {
-					distance = (int) Math
-							.sqrt((point.x - head.x) * (point.x - head.x) + 
-									(point.y - head.y) * (point.y - head.y));
+					distance = (int) calcDistance(point, head);
 					if (distance < u) {
 						// key is the snake that died
 						return true;
@@ -151,25 +181,25 @@ public abstract class Snake {
 		return false;
 	}
 
-	//Description: The method chooses random pastel colour
-	//Parameters: n/a
-	//Return: color
+	// Description: The method chooses random pastel colour
+	// Parameters: n/a
+	// Return: color
 	private Color randomColour() {
 		Random random = new Random();
 		return Color.getHSBColor(random.nextFloat(), 0.6f, 1.0f);
 	}
-	
-	//Description: This method calculates new point of head for movement
-	//Parameters: Graphics
+
+	// Description: This method calculates new point of head for movement
+	// Parameters: Graphics
 	private Point calcNewPoint() {
 		double degree = calcDegree(new Point(headX, headY), new Point(goalX, goalY));
 		Point p = new Point((int) (headX + Math.cos(Math.toRadians(degree)) * speed),
 				(int) (headY - Math.sin(Math.toRadians(degree)) * speed));
 		return p;
 	}
-	
-	//Description: This method calculates angle between two points
-	//Parameters: Graphics
+
+	// Description: This method calculates angle between two points
+	// Parameters: Graphics
 	protected double calcDegree(Point start, Point end) {
 		if (start.x < end.x && start.y <= end.y) {
 			degree = 360 - Math.toDegrees(Math.atan((double) (end.y - start.y) / (end.x - start.x)));
@@ -187,29 +217,31 @@ public abstract class Snake {
 
 		return degree;
 	}
-	
-	//COMPARETO
+
+	// COMPARETO
 	public int compareTo(Snake s) {
-		return this.length-s.length;
+		return this.length - s.length;
 	}
-	
-	//GETTERS + SETTERS
+
+	// GETTERS + SETTERS
 	public String getName() {
 		return this.name;
 	}
+
 	public void setHead(Point head) {
 		headX = head.x;
 		headY = head.y;
 		if (body.size() > 0)
 			body.set(0, head);
 	}
+
 	public void setTarget(int x, int y) {
 		goalX = x;
 		goalY = y;
 	}
+
 	public Point getHead() {
 		return new Point(headX, headY);
 	}
-
 
 }
