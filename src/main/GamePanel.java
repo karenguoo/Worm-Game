@@ -25,6 +25,7 @@ public class GamePanel extends JPanel implements Runnable, MouseMotionListener, 
 	static final int UNIT_SIZE = 10;
 	static final int SNAKE_COUNT = 60;
 	static final int FOOD_COUNT = 700;
+	static Food boostFood;
 
 	static final int FPS = 60;
 	public int pB;
@@ -118,6 +119,7 @@ public class GamePanel extends JPanel implements Runnable, MouseMotionListener, 
 	//Parameters:
 	private void stopGame() {
 		runGame = false;
+		hacksOn = false;
 		pB = playerInfo[0]; //set current length (personal best)
 		this.gameThread = null;
 	}
@@ -126,6 +128,9 @@ public class GamePanel extends JPanel implements Runnable, MouseMotionListener, 
 	//Parameters: n/a
 	private void update() {
 		System.out.println(foods.size());
+		if (boostFood!=null)
+			foods.add(boostFood);
+		
 		player.move(); 
 		cam.focus(player); //move view screen to centre on player
 	
@@ -227,8 +232,7 @@ public class GamePanel extends JPanel implements Runnable, MouseMotionListener, 
 			it.next();
 			it.remove();
 		}
-		foods.removeAll(foods);
-
+		foods.clear();
 
 		player = new Player(new Point(randomPoint()), mainFrame.getPlayerName()); //create player
 		snakes.put(0, player); //player always at map index 0
@@ -295,12 +299,13 @@ public class GamePanel extends JPanel implements Runnable, MouseMotionListener, 
 	//Description: The method generate random point on board
 	//Parameters: n/a
 	//Return: Point
-	static Point randomPoint() {
+	private Point randomPoint() {
 		Point p = new Point(0, 0);
 		p.x = (int) (Math.random() * (MAP_WIDTH - VIEW_WIDTH - UNIT_SIZE) + BORDER_WIDTH);
 		p.y = (int) (Math.random() * (MAP_HEIGHT - VIEW_HEIGHT - UNIT_SIZE) + BORDER_HEIGHT);
 		return p;
 	}
+	
 	//Description: The method chooses random pastel colour
 	//Parameters: n/a
 	//Return: color
@@ -308,6 +313,7 @@ public class GamePanel extends JPanel implements Runnable, MouseMotionListener, 
 		Random random = new Random();
 		return Color.getHSBColor(random.nextFloat(), 0.6f, 1.0f);
 	}
+	
 	//Description: The method draws random point on board
 	//Parameters: n/a
 	//Return: Point
@@ -368,14 +374,13 @@ public class GamePanel extends JPanel implements Runnable, MouseMotionListener, 
 	@Override
 	public void mousePressed(MouseEvent e) {
 		//System.out.print("drag");
-		player.speed=20;
-		//player.boost.
+		player.boost();
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		//System.out.print("release");
-		player.speed=10;		
+		player.reduce();		
 	}
 
 	@Override
